@@ -141,6 +141,7 @@ import org.springframework.web.context.support.StandardServletEnvironment;
  * ("spring.main.web-application-type=none") or the flag to switch off the banner
  * ("spring.main.banner-mode=off").
  *
+ *
  * @author Phillip Webb
  * @author Dave Syer
  * @author Andy Wilkinson
@@ -155,6 +156,8 @@ import org.springframework.web.context.support.StandardServletEnvironment;
  * @see #run(Class, String[])
  * @see #run(Class[], String[])
  * @see #SpringApplication(Class...)
+ *
+ * SpringApplication类，这个是SpringBoot的启动类，提供了一个静态的run方法来启动程序，该类主要用来创建并且刷新Spring容器ApplicationContext.II
  */
 public class SpringApplication {
 
@@ -250,6 +253,7 @@ public class SpringApplication {
 	}
 
 	/**
+	 * 构造一个SpringApplication的实例
 	 * Create a new {@link SpringApplication} instance. The application context will load
 	 * beans from the specified primary sources (see {@link SpringApplication class-level}
 	 * documentation for details. The instance can be customized before calling
@@ -263,11 +267,18 @@ public class SpringApplication {
 	public SpringApplication(ResourceLoader resourceLoader, Class<?>... primarySources) {
 		this.resourceLoader = resourceLoader;
 		Assert.notNull(primarySources, "PrimarySources must not be null");
+		// 构造SpringApplication的时候会进行初始化的工作
+		// 1. 把参数sources设置到SpringApplication属性中，这个sources可以是任何类型的参数。
+		// 本文的例子中这个sources就是MyApplication的class对象
 		this.primarySources = new LinkedHashSet<>(Arrays.asList(primarySources));
+		// 2. 判断是否是web程序，并设置到webEnvironment这个boolean属性中
 		this.webApplicationType = WebApplicationType.deduceFromClasspath();
+		// 3. 找出所有的初始化器，默认有5个，设置到initializers属性中
 		setInitializers((Collection) getSpringFactoriesInstances(
 				ApplicationContextInitializer.class));
+		// 4.找出所有的应用程序监听器，默认有9个，设置到listeners属性中
 		setListeners((Collection) getSpringFactoriesInstances(ApplicationListener.class));
+		// 5. 找出运行的主类(main class)
 		this.mainApplicationClass = deduceMainApplicationClass();
 	}
 
@@ -287,32 +298,40 @@ public class SpringApplication {
 	}
 
 	/**
+	 * SpringApplication构造完成之后调用run方法，启动SpringApplication，
 	 * Run the Spring application, creating and refreshing a new
 	 * {@link ApplicationContext}.
 	 * @param args the application arguments (usually passed from a Java main method)
 	 * @return a running {@link ApplicationContext}
 	 */
 	public ConfigurableApplicationContext run(String... args) {
+		// 1. 构造一个StopWatch，观察SpringApplication的执行
 		StopWatch stopWatch = new StopWatch();
 		stopWatch.start();
 		ConfigurableApplicationContext context = null;
 		Collection<SpringBootExceptionReporter> exceptionReporters = new ArrayList<>();
 		configureHeadlessProperty();
+		// 2. 找出所有的SpringApplicationRunListener并封装到SpringApplicationRunListeners中，
+		// 用于监听run方法的执行。监听的过程中会封装成事件并广播出去让初始化过程中产生的应用程序监听器进行监听
 		SpringApplicationRunListeners listeners = getRunListeners(args);
 		listeners.starting();
 		try {
+			// 3. 构造Spring容器(ApplicationContext)
 			ApplicationArguments applicationArguments = new DefaultApplicationArguments(
 					args);
 			ConfigurableEnvironment environment = prepareEnvironment(listeners,
 					applicationArguments);
 			configureIgnoreBeanInfo(environment);
 			Banner printedBanner = printBanner(environment);
+			// 3.1 创建Spring容器的判断是否是web环境，是的话构造AnnotationConfigEmbeddedWebApplicationContext，否则构造AnnotationConfigApplicationContext
 			context = createApplicationContext();
 			exceptionReporters = getSpringFactoriesInstances(
 					SpringBootExceptionReporter.class,
 					new Class[] { ConfigurableApplicationContext.class }, context);
+			// 3.2 初始化过程中产生的初始化器在这个时候开始工作
 			prepareContext(context, environment, listeners, applicationArguments,
 					printedBanner);
+			// 3.3 Spring容器的刷新(完成bean的解析、各种processor接口的执行、条件注解的解析等等)
 			refreshContext(context);
 			afterRefresh(context, applicationArguments);
 			stopWatch.stop();
@@ -321,6 +340,7 @@ public class SpringApplication {
 						.logStarted(getApplicationLog(), stopWatch);
 			}
 			listeners.started(context);
+			// 4. 从Spring容器中找出ApplicationRunner和CommandLineRunner接口的实现类并排序后依次执行
 			callRunners(context, applicationArguments);
 		}
 		catch (Throwable ex) {
@@ -588,12 +608,14 @@ public class SpringApplication {
 			try {
 				switch (this.webApplicationType) {
 				case SERVLET:
+					// 创建Spring容器的判断是否是web环境，是的话构造AnnotationConfigEmbeddedWebApplicationContext
 					contextClass = Class.forName(DEFAULT_SERVLET_WEB_CONTEXT_CLASS);
 					break;
 				case REACTIVE:
 					contextClass = Class.forName(DEFAULT_REACTIVE_WEB_CONTEXT_CLASS);
 					break;
 				default:
+					//否则构造 AnnotationConfigApplicationContext
 					contextClass = Class.forName(DEFAULT_CONTEXT_CLASS);
 				}
 			}
@@ -784,6 +806,11 @@ public class SpringApplication {
 			ApplicationArguments args) {
 	}
 
+	/**
+	 * 从Spring容器中找出ApplicationRunner和CommandLineRunner接口的实现类并排序后依次执行
+	 * @param context
+	 * @param args
+	 */
 	private void callRunners(ApplicationContext context, ApplicationArguments args) {
 		List<Object> runners = new ArrayList<>();
 		runners.addAll(context.getBeansOfType(ApplicationRunner.class).values());
@@ -1257,6 +1284,7 @@ public class SpringApplication {
 	 */
 	public static ConfigurableApplicationContext run(Class<?>[] primarySources,
 			String[] args) {
+		// 调用实例的run方法就表示启动SpringBoot。
 		return new SpringApplication(primarySources).run(args);
 	}
 

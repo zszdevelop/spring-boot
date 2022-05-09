@@ -49,6 +49,12 @@ public class SampleTomcatApplication {
 	}
 
 	public static void main(String[] args) {
+		/**
+		 * SpringBoot启动的时候，不论调用什么方法，
+		 * 都会构造一个SpringApplication的实例，
+		 * 然后调用这个实例的run方法，
+		 * 这样就表示启动SpringBoot
+		 */
 		SpringApplication.run(SampleTomcatApplication.class, args);
 	}
 
