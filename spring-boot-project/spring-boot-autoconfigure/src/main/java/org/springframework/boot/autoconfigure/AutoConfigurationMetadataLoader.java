@@ -43,6 +43,13 @@ final class AutoConfigurationMetadataLoader {
 		return loadMetadata(classLoader, PATH);
 	}
 
+	/**
+	 * 第二步：加载所有Spring预先定义的配置条件信息（properties中）
+	 * 这些配置信息在org.springframework.boot.autoconfigure包下的META-INF/spring-autoconfigure-metadata.properties文件中
+	 * @param classLoader
+	 * @param path
+	 * @return
+	 */
 	static AutoConfigurationMetadata loadMetadata(ClassLoader classLoader, String path) {
 		try {
 			Enumeration<URL> urls = (classLoader != null) ? classLoader.getResources(path)

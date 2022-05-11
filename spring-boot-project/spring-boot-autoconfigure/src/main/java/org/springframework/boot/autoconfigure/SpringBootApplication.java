@@ -47,8 +47,14 @@ import org.springframework.core.annotation.AliasFor;
 @Retention(RetentionPolicy.RUNTIME)
 @Documented
 @Inherited
+// 注解1 @SpringBootConfiguration：对Configuration注解的一个封装
 @SpringBootConfiguration
+// 注解2 @EnableAutoConfiguration：自动装配的原理就在这里
+// 利用@Import注解，将所有符合自动装配条件的bean注入到IOC容器中
 @EnableAutoConfiguration
+// 注解2 @ComponentScan：自动扫描并加载符合条件的Bean到容器中，这个注解会默认扫描声明类所在的包开始扫描，
+// 例如： 类com.zszdevelop.Demo类上标注了@ComponentScan 注解，
+// 则com.zszdevelop.controller、com.zszdevelop.service等等包下的类都可以被扫描到
 @ComponentScan(excludeFilters = {
 		@Filter(type = FilterType.CUSTOM, classes = TypeExcludeFilter.class),
 		@Filter(type = FilterType.CUSTOM, classes = AutoConfigurationExcludeFilter.class) })

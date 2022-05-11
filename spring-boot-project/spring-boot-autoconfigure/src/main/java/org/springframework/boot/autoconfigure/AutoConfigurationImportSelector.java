@@ -92,17 +92,23 @@ public class AutoConfigurationImportSelector
 
 	@Override
 	public String[] selectImports(AnnotationMetadata annotationMetadata) {
+		// 1. 当前系统是否禁用了自动装配的功能
 		if (!isEnabled(annotationMetadata)) {
+			// 如果当前系统禁用了自动装配的功能则会返回如下这个空的数组，后续也就无法注入bean了
 			return NO_IMPORTS;
 		}
+		// 2. 加载所有Spring预先定义的配置条件信息，
+		// 这些配置信息在org.springframework.boot.autoconfigure包下的META-INF/spring-autoconfigure-metadata.properties文件中
 		AutoConfigurationMetadata autoConfigurationMetadata = AutoConfigurationMetadataLoader
 				.loadMetadata(this.beanClassLoader);
+		// 3. 过滤出满足条件的配置信息
 		AutoConfigurationEntry autoConfigurationEntry = getAutoConfigurationEntry(
 				autoConfigurationMetadata, annotationMetadata);
 		return StringUtils.toStringArray(autoConfigurationEntry.getConfigurations());
 	}
 
 	/**
+	 * 第三步：过滤出满足条件的配置信息
 	 * Return the {@link AutoConfigurationEntry} based on the {@link AnnotationMetadata}
 	 * of the importing {@link Configuration @Configuration} class.
 	 * @param autoConfigurationMetadata the auto-configuration metadata
@@ -115,14 +121,21 @@ public class AutoConfigurationImportSelector
 		if (!isEnabled(annotationMetadata)) {
 			return EMPTY_ENTRY;
 		}
+		// 1.获取@EnableAutoConfiguration注解上的exclude、excludeName属性，这两个属性的作用都是排除一些类的
 		AnnotationAttributes attributes = getAttributes(annotationMetadata);
+		// 2. 加载整个项目所有的spring.factories文件
+		// 刚才图片中spring-autoconfigure-metadata.properties文件的上方存在一个文件spring.factories，这个文件可就不止存在于`org.springframework.boot.autoconfigure`包里了
 		List<String> configurations = getCandidateConfigurations(annotationMetadata,
 				attributes);
+		// 3. 移除重复的配置
 		configurations = removeDuplicates(configurations);
+		// 4. 去除我们指定排除的配置类
 		Set<String> exclusions = getExclusions(annotationMetadata, attributes);
 		checkExcludedClasses(configurations, exclusions);
 		configurations.removeAll(exclusions);
+		// 5. 就是根据加载的配置条件信息来判断各个配置类上的`@ConditionalXXX`系列注解是否满足需求
 		configurations = filter(configurations, autoConfigurationMetadata);
+		// 6. 最后就是发布自动装配完成事件，然后返回所有能够自动装配的类的全限定名
 		fireAutoConfigurationImportEvents(configurations, exclusions);
 		return new AutoConfigurationEntry(configurations, exclusions);
 	}
@@ -132,6 +145,11 @@ public class AutoConfigurationImportSelector
 		return AutoConfigurationGroup.class;
 	}
 
+	/**
+	 * 第一步：判断当前系统是否禁用了自动装配的功能
+	 * @param metadata
+	 * @return
+	 */
 	protected boolean isEnabled(AnnotationMetadata metadata) {
 		if (getClass() == AutoConfigurationImportSelector.class) {
 			return getEnvironment().getProperty(
@@ -251,6 +269,12 @@ public class AutoConfigurationImportSelector
 		return (excludes != null) ? Arrays.asList(excludes) : Collections.emptyList();
 	}
 
+	/**
+	 * 接着这一行的逻辑稍微复杂一些，主要就是根据加载的配置条件信息来判断各个配置类上的@ConditionalXXX系列注解是否满足需求
+	 * @param configurations
+	 * @param autoConfigurationMetadata
+	 * @return
+	 */
 	private List<String> filter(List<String> configurations,
 			AutoConfigurationMetadata autoConfigurationMetadata) {
 		long startTime = System.nanoTime();
