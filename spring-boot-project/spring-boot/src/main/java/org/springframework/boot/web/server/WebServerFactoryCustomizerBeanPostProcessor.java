@@ -31,6 +31,7 @@ import org.springframework.core.annotation.AnnotationAwareOrderComparator;
 import org.springframework.util.Assert;
 
 /**
+ * 获取bean `tomcatServletWebServerFactory`的时候就会执行后置处理器的`postProcessBeforeInitialization`方法
  * {@link BeanPostProcessor} that applies all {@link WebServerFactoryCustomizer} beans
  * from the bean factory to {@link WebServerFactory} beans.
  *

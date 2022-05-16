@@ -75,6 +75,7 @@ public class ServletWebServerFactoryAutoConfiguration {
 	}
 
 	/**
+	 * 注册了后置处理器
 	 * Registers a {@link WebServerFactoryCustomizerBeanPostProcessor}. Registered via
 	 * {@link ImportBeanDefinitionRegistrar} for early registration.
 	 */
@@ -96,6 +97,7 @@ public class ServletWebServerFactoryAutoConfiguration {
 			if (this.beanFactory == null) {
 				return;
 			}
+			// 后置处理器
 			registerSyntheticBeanIfMissing(registry,
 					"webServerFactoryCustomizerBeanPostProcessor",
 					WebServerFactoryCustomizerBeanPostProcessor.class);

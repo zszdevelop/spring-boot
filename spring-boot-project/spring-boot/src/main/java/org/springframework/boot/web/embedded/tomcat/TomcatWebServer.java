@@ -85,7 +85,6 @@ public class TomcatWebServer implements WebServer {
 		this.autoStart = autoStart;
 		initialize();
 	}
-
 	private void initialize() throws WebServerException {
 		logger.info("Tomcat initialized with port(s): " + getPortsDescription(false));
 		synchronized (this.monitor) {
@@ -101,7 +100,6 @@ public class TomcatWebServer implements WebServer {
 						removeServiceConnectors();
 					}
 				});
-
 				// Start the server to trigger initialization listeners
 				this.tomcat.start();
 
@@ -118,6 +116,7 @@ public class TomcatWebServer implements WebServer {
 
 				// Unlike Jetty, all Tomcat threads are daemon threads. We create a
 				// blocking non-daemon to stop immediate shutdown
+				//启动一个 非 daemon线程就，保证程序不会退出
 				startDaemonAwaitThread();
 			}
 			catch (Exception ex) {

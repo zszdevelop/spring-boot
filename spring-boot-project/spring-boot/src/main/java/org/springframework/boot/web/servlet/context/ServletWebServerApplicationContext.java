@@ -174,8 +174,12 @@ public class ServletWebServerApplicationContext extends GenericWebApplicationCon
 	private void createWebServer() {
 		WebServer webServer = this.webServer;
 		ServletContext servletContext = getServletContext();
+		// 第一次访问的时候两个对象都为空
 		if (webServer == null && servletContext == null) {
+			//  使用工厂模式创建容器,因为内置的容器有很多种，不只是tomcat
 			ServletWebServerFactory factory = getWebServerFactory();
+			// getSelfInitializer() 环境配置,这是SpringContext 与ServletContext 进行通信的关键
+			// 启动WebServer(tomcat)
 			this.webServer = factory.getWebServer(getSelfInitializer());
 		}
 		else if (servletContext != null) {
@@ -198,6 +202,7 @@ public class ServletWebServerApplicationContext extends GenericWebApplicationCon
 	 */
 	protected ServletWebServerFactory getWebServerFactory() {
 		// Use bean names so that we don't consider the hierarchy
+		// 这里获取的beanname就是上方注册的tomcatServletWebServerFactory了
 		String[] beanNames = getBeanFactory()
 				.getBeanNamesForType(ServletWebServerFactory.class);
 		if (beanNames.length == 0) {
@@ -215,6 +220,10 @@ public class ServletWebServerApplicationContext extends GenericWebApplicationCon
 	}
 
 	/**
+	 * getSelfInitializer() 返回一个lamda 函数,这是SpringContext 与ServletContext 进行通信的关键。简单描述逻辑为：
+	 * 		SpringContext.setServletContext(ServletContext)
+	 * 		ServletContext.setSpringContext(SpringContext)
+	 * 这样双方都能够获取对方的完成信息。
 	 * Returns the {@link ServletContextInitializer} that will be used to complete the
 	 * setup of this {@link WebApplicationContext}.
 	 * @return the self initializer
